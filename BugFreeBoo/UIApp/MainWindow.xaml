@@ -1,0 +1,23 @@
+﻿<Window x:Class="UIApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Controls;assembly=Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:UIApp"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        Title="MainWindow"
+        Width="600"
+        Height="350"
+        mc:Ignorable="d">
+    <ScrollViewer CanContentScroll="True">
+        <controls:VirtualizingWrapPanel ItemHeight="200" ItemWidth="200">
+            <Button>Click me</Button>
+            <Button>Second</Button>
+            <Button>Click me</Button>
+            <Button>Click me</Button>
+            <Button>Click me</Button>
+            <Button>Click me</Button>
+            <Button>Click me</Button>
+        </controls:VirtualizingWrapPanel>
+    </ScrollViewer>
+</Window>
