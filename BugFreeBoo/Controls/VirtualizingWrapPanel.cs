@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -50,8 +52,11 @@ namespace Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            var childSize = new Size(ItemWidth, ItemHeight);
-            var extent = GetExtent(availableSize);
+            
+            var itemsPerRow = ItemsPerRow;
+            var extent = new Size(availableSize.Width,
+                Math.Ceiling((double) ItemsCount/itemsPerRow)*ItemHeight);
+            Debug.WriteLine("Extend size: " + extent);
 
             if (extent != _extent)
             {
@@ -71,31 +76,61 @@ namespace Controls
             int lastVisibleIndex;
             GetVisibleIndexes(out firstVisibleIndex, out lastVisibleIndex);
 
-            foreach (UIElement child in InternalChildren)
+            var generator = ItemContainerGenerator;
+
+            var firstItemPosition = generator.GeneratorPositionFromIndex(0);
+            using (generator.StartAt(firstItemPosition, GeneratorDirection.Forward))
             {
-                child.Measure(childSize);
+                for (int i = 0; i < ItemsCount; i++)
+                {
+                    bool isNewRealized;
+                    var child = (UIElement)generator.GenerateNext(out isNewRealized);
+                    if (isNewRealized)
+                    {
+                        AddInternalChild(child);
+                        generator.PrepareItemContainer(child);
+                    }
+                    
+                }
             }
 
-            return availableSize;
+            if (Children.Count > 0)
+            {
+                
+
+                var childSize = new Size(ItemWidth, ItemHeight);
+                foreach (UIElement child in InternalChildren)
+                {
+                    child.Measure(childSize);
+                }
+            }
+            
+
+            return extent;
         }
 
         private void GetVisibleIndexes(out int firstVisibleIndex, out int lastVisibleIndex)
         {
-            var itemsPerRow = GetItemsPerRow();
-            firstVisibleIndex = (int) Math.Floor(VerticalOffset/ItemHeight)*itemsPerRow;
-            lastVisibleIndex = Math.Max((int) Math.Ceiling((VerticalOffset + ViewportHeight)/ItemHeight)*itemsPerRow-1, 0);
-        }
+            if (InternalChildren.Count == 0)
+            {
+                firstVisibleIndex = -1;
+                lastVisibleIndex = -1;
+            }
+            else
+            {
+                var itemsPerRow = ItemsPerRow;
+                firstVisibleIndex = (int)Math.Floor(VerticalOffset / ItemHeight) * itemsPerRow;
+                lastVisibleIndex = Math.Max((int)Math.Ceiling((VerticalOffset + ViewportHeight) / ItemHeight) * itemsPerRow - 1, 0);
+            }
 
-        private Size GetExtent(Size availableSize)
-        {
-            var extent = new Size(availableSize.Width,
-                (Math.Ceiling((double) InternalChildren.Count/GetItemsPerRow()))*ItemHeight);
-            return extent;
+            Contract.Ensures(lastVisibleIndex >= firstVisibleIndex);
         }
 
         protected override Size ArrangeOverride(Size finalSize)
-        {
-            var extent = GetExtent(finalSize);
+        { 
+            var extent = new Size(finalSize.Width,
+                Math.Ceiling((double)ItemsCount / ItemsPerRow) * ItemHeight);
+            Debug.WriteLine("Extend size: " + extent);
 
             if (extent != _extent)
             {
@@ -111,7 +146,9 @@ namespace Controls
                     ScrollOwner.InvalidateScrollInfo();
             }
 
-            var itemsPerRow = GetItemsPerRow();
+            
+
+            var itemsPerRow = ItemsPerRow;
             for (int i = 0; i < InternalChildren.Count; i++)
             {
                 UIElement child = InternalChildren[i];
@@ -121,6 +158,17 @@ namespace Controls
             }
             return finalSize;
         }
+
+        private int ItemsCount
+        {
+            get
+            {
+                var itemsControl = ItemsControl.GetItemsOwner(this);
+                return itemsControl.Items.Count;
+            }
+        }
+
+        public ItemsControl ItemsControl { get; set; }
 
         public void LineUp()
         {
@@ -208,6 +256,8 @@ namespace Controls
             _offset.Y = offset;
 
             _translate.Y = -offset;
+
+            InvalidateMeasure();
         }
 
         public Rect MakeVisible(Visual visual, Rect rectangle)
@@ -236,14 +286,14 @@ namespace Controls
 
         private double GetItemRow(int itemIndex)
         {
-            var itemsPerRow = GetItemsPerRow();
+            var itemsPerRow = ItemsPerRow;
             var itemRow = Math.Ceiling((double) (itemIndex + 1)/itemsPerRow);
             return itemRow;
         }
 
-        private int GetItemsPerRow()
+        private int ItemsPerRow
         {
-            return (int) Math.Max(1, Math.Floor(_viewport.Width/ItemWidth));
+            get { return (int) Math.Max(1, Math.Floor(ViewportWidth/ItemWidth)); }
         }
 
         public bool CanVerticallyScroll { get; set; }

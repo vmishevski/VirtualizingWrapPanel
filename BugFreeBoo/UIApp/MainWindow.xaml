@@ -9,15 +9,26 @@
         Width="600"
         Height="350"
         mc:Ignorable="d">
-    <ScrollViewer CanContentScroll="True">
-        <controls:VirtualizingWrapPanel ItemHeight="200" ItemWidth="200">
-            <Button>Click me</Button>
-            <Button>Second</Button>
-            <Button>Click me</Button>
-            <Button>Click me</Button>
-            <Button>Click me</Button>
-            <Button>Click me</Button>
-            <Button>Click me</Button>
-        </controls:VirtualizingWrapPanel>
-    </ScrollViewer>
+    <Window.DataContext>
+        <local:ViewModel />
+    </Window.DataContext>
+    <StackPanel>
+        <ScrollViewer CanContentScroll="True">
+            <ListView x:Name="List"
+                      ItemsSource="{Binding Collection}"
+                      ScrollViewer.CanContentScroll="True">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingWrapPanel IsItemsHost="True"
+                                                        IsVirtualizing="True"
+                                                        ItemHeight="200"
+                                                        ItemWidth="200" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+            </ListView>
+        </ScrollViewer>
+
+        <Button Click="ButtonBase_OnClick">Click me</Button>
+    </StackPanel>
+
 </Window>
