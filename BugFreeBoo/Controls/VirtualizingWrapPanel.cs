@@ -67,12 +67,23 @@ namespace Controls
                     ScrollOwner.InvalidateScrollInfo();
             }
 
+            int firstVisibleIndex;
+            int lastVisibleIndex;
+            GetVisibleIndexes(out firstVisibleIndex, out lastVisibleIndex);
+
             foreach (UIElement child in InternalChildren)
             {
                 child.Measure(childSize);
             }
 
             return availableSize;
+        }
+
+        private void GetVisibleIndexes(out int firstVisibleIndex, out int lastVisibleIndex)
+        {
+            var itemsPerRow = GetItemsPerRow();
+            firstVisibleIndex = (int) Math.Floor(VerticalOffset/ItemHeight)*itemsPerRow;
+            lastVisibleIndex = Math.Max((int) Math.Ceiling((VerticalOffset + ViewportHeight)/ItemHeight)*itemsPerRow-1, 0);
         }
 
         private Size GetExtent(Size availableSize)
@@ -190,9 +201,9 @@ namespace Controls
             {
                 offset = 0;
             }
-            else if(offset + _viewport.Height >= _extent.Height)
+            else if(offset + ViewportHeight >= ExtentHeight)
             {
-                offset = _extent.Height - _viewport.Height;
+                offset = ExtentHeight - ViewportHeight;
             }
             _offset.Y = offset;
 
